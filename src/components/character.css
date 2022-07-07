@@ -1,0 +1,48 @@
+
+.character.down {
+  --walk-y: 0;
+}
+.character.left {
+  --walk-y: 1;
+}
+.character.right {
+  --walk-y: 2;
+}
+.character.up {
+  --walk-y: 3;
+}
+
+.character {
+  width: 64px;
+  height: 64px;
+  border: 1px solid red;
+
+  position: absolute;
+  top: calc(var(--y) * 1px);
+  left: calc(var(--x) * 1px);
+
+  z-index: calc(var(--y)); /* how many ? */
+
+  --walk-y: 0;  /* Row */
+  background: url(../images/players/1-skin.png);
+  background-size: 192px;
+  background-position: 128px calc(var(--walk-y) * -64px);
+}
+
+.character.borders {
+  opacity: 50%;
+  z-index: 10000;
+}
+
+.character.is-walking {
+  animation: walking .5s steps(3) infinite;
+}
+
+@keyframes walking {
+  0% {
+    background-position: 0 calc(var(--walk-y) * -64px);
+  }
+  100% {
+    background-position: 192px calc(var(--walk-y) * -64px);
+  }
+}

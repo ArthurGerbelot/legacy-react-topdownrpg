@@ -1,0 +1,38 @@
+/*[data-w] {
+  --w: attr(data-w);
+}
+[data-h] {
+  --h: attr(data-h);
+}
+[data-x] {
+  --x: attr(data-x);
+}
+[data-y] {
+  --y: attr(data-y);
+}*/
+/*
+#map {
+  --w: 8;
+  --h: 8;
+}
+.tile {
+  --x: 5;
+  --y: 2;
+}
+*/
+#map,
+#map-terrain {
+  width: calc(var(--w) * 64px);
+  height: calc(var(--h) * 64px);
+}
+#map-terrain {
+  border: 1px solid red;
+
+  background: url('../images/bg-grass-32x32.png');
+  background-size: 64px;
+
+  display: grid;
+  grid-template-rows: repeat(var(--w), 64px); /* repeat(15, 1fr);    /* 15 rows */
+  grid-template-columns: repeat(var(--h), 64px); /* repeat(10, 1fr); /* 10 columns */
+  gap: 0;
+}

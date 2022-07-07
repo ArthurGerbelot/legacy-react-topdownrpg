@@ -1,0 +1,79 @@
+/*
+* {
+  --chipset-tile-size: 32;
+  --map-tile-size: 64;
+  --ratio: calc(--map-tile-size / --chipset-tile-size);
+}*/
+
+.tile {
+  width: 64px;
+  height: 64px;
+
+  /* Grid are 1 based index */
+  grid-column: calc(var(--x) + 1);
+  grid-row: calc(var(--y) + 1);
+
+  background: url(../images/chipset.png);
+  background-size: 512px; /* chipset is w:256px */
+
+  position: relative;
+  z-index: calc(var(--y) * 64);
+}
+
+.tile.dev-collide {
+  position: absolute;
+  background: red;
+  opacity: 0.5;
+  z-index: 6000;
+  top: calc(var(--y) * 64px);
+  left: calc(var(--x) * 64px);
+}
+
+
+
+
+
+
+/* All Tiles defined here */
+
+.tile.bush {
+  background-position: 0 calc(-64px * 5);
+}
+.tile.grass-details {
+  background-position: 0 calc(-64px * 6);
+}
+.tile.tall-herbs {
+  background: url(../images/chipset2.png);
+  background-size: 1024px; /* chipset2 is w:1024px 64x64 */
+  background-position: calc(-64px * 8) calc(-64px * 6);
+}
+
+.tile.tree {
+
+  width: 128px;
+  height: 128px;
+  background-position: 0 calc(-64px * 1);
+
+  z-index: calc((var(--y) + 1) * 64);
+}
+
+/* left-right */
+.tile.fence {
+  background-position: 0 calc(-64px * 23);
+}
+
+
+.tile.tree-00 {
+  background-position: 0 calc(-64px * 2);
+}
+.tile.tree-10 {
+  background-position: calc(-64px * 1) calc(-64px * 2);
+}
+.tile.tree-01 {
+  background-position: 0 calc(-64px * 1);
+}
+.tile.tree-11 {
+  background-position: calc(-64px * 1) calc(-64px * 1);
+}
+
+

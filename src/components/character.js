@@ -9,31 +9,30 @@
  *  - isWalking: bool
  */
 
-
-import React from 'react';
-
 import "./character.css";
 
-const Character = ({pos, skin=1, dir, isWalking}) => {
-  return <>
-    <div
-      className={`character skin-${skin} ${dir} ${isWalking && 'is-walking'}`}
-      style={{"--x": pos.x, "--y": pos.y}}
-    ></div>
-
-    <div
-      className={`character borders skin-${skin} ${dir} ${isWalking && 'is-walking'}`}
-      style={{"--x": pos.x, "--y": pos.y}}
-    ></div>
-  </>
-
+const Character = ({ pos, skin = 1, dir, isWalking }) => {
+  return (
+    <>
+      <div
+        className={`character skin-${skin} ${dir} ${isWalking && "is-walking"}`}
+        style={{ "--x": pos.x, "--y": pos.y }}
+      ></div>
+      <div
+        className={`character borders skin-${skin} ${dir} ${
+          isWalking && "is-walking"
+        }`}
+        style={{ "--x": pos.x, "--y": pos.y }}
+      ></div>
+    </>
+  );
 };
 
 export const DIRECTION = {
-  UP: 'up',
-  DOWN: 'down',
-  LEFT: 'left',
-  RIGHT: 'right',
+  UP: "up",
+  DOWN: "down",
+  LEFT: "left",
+  RIGHT: "right",
 };
 
 export default Character;

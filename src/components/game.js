@@ -1,146 +1,173 @@
-import React, { useEffect, useState } from 'react';
-// import useKeypress from 'use-keyboard-shortcut';
+import { useEffect, useReducer, useRef } from "react";
 
-import Viewport from './viewport';
-import Map from './map';
-import Character, { DIRECTION } from './character';
+import Character, { DIRECTION } from "./character";
+import Map from "./map";
+import Viewport from "./viewport";
 
 const MOVING_DISTANCE = 16; // px/frame
-const MOVING_TIME = 1000/10; // ms - 20 FPS
+const MOVING_TIME = 1000 / 10; // ms - 20 FPS
 
-const Game = () => {
+window.keys = {
+  [DIRECTION.UP]: false,
+  [DIRECTION.DOWN]: false,
+  [DIRECTION.RIGHT]: false,
+  [DIRECTION.LEFT]: false,
+};
+window.lastMoveTime = 0;
 
-  let [isPlayerMove, setPlayerMove] = useState(false);
-  let [playerPos, setPlayerPos] = useState({x:128, y:128});
-  let [playerDir, setPlayerDir] = useState(DIRECTION.DOWN);
-  let [lastMoveTime, setLastMoveTime] = useState(0);//
-  // let playerDir = DIRECTION.DOWN;
+const useFrameLoop = (callback) => {
+  const requestID = useRef();
+  const previousTime = useRef();
 
-  // Keep witch key is pressed
-  let [isUpPressed, setUpPressed] = useState(false);
-  let [isDownPressed, setDownPressed] = useState(false);
-  let [isRightPressed, setRightPressed] = useState(false);
-  let [isLeftPressed, setLeftPressed] = useState(false);
+  const loop = (time) => {
+    if (previousTime.current !== undefined) {
+      const deltaTime = time - previousTime.current;
+      callback(time, deltaTime);
+    }
 
-  // even press is flooded... so dont "reupdate for direction" if already pressed on that direction, only when it's new
-  const onKeyPress = (e) => {
-    setPlayerMove(true);
-    if (e.keyCode == 38 && !isUpPressed) {
-      setUpPressed(true);
-      // playerDir = DIRECTION.UP;
-      setPlayerDir(DIRECTION.UP);
-      playerDir = DIRECTION.UP;
-    }
-    if (e.keyCode == 40 && !isDownPressed) {
-      setDownPressed(true);
-      // playerDir = DIRECTION.DOWN;
-      setPlayerDir(DIRECTION.DOWN);
-      playerDir = DIRECTION.DOWN;
-    }
-    if (e.keyCode == 37 && !isLeftPressed) {
-      setLeftPressed(true);
-      // playerDir = DIRECTION.LEFT;
-      setPlayerDir(DIRECTION.LEFT);
-      playerDir = DIRECTION.LEFT;
-    }
-    if (e.keyCode == 39 && !isRightPressed) {
-      setRightPressed(true);
-      // playerDir = DIRECTION.RIGHT;
-      setPlayerDir(DIRECTION.RIGHT);
-      playerDir = DIRECTION.RIGHT;
-    }
+    previousTime.current = time;
+    requestID.current = requestAnimationFrame(loop);
   };
 
+  useEffect(() => {
+    requestID.current = requestAnimationFrame(loop);
+
+    return () => cancelAnimationFrame(requestID.current);
+  }, []);
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "update":
+      return {
+        ...state,
+        playerDir: action.newState.playerDir ?? state.playerDir,
+        playerPos: {
+          x: state.playerPos.x + action.newState.playerPos.x,
+          y: state.playerPos.y + action.newState.playerPos.y,
+        },
+        isPlayerMove: action.newState.isPlayerMove ?? state.isPlayerMove,
+      };
+
+    default:
+      throw new Error();
+  }
+}
+
+const movementMap = (dir) => {
+  switch (dir) {
+    case DIRECTION.UP:
+      return { x: 0, y: -MOVING_DISTANCE };
+    case DIRECTION.DOWN:
+      return { x: 0, y: MOVING_DISTANCE };
+    case DIRECTION.LEFT:
+      return { x: -MOVING_DISTANCE, y: 0 };
+    case DIRECTION.RIGHT:
+      return { x: MOVING_DISTANCE, y: 0 };
+    default:
+      return { x: 0, y: 0 };
+  }
+};
+
+const Game = () => {
+  const [state, dispatch] = useReducer(reducer, {
+    playerDir: DIRECTION.DOWN,
+    playerPos: { x: 128, y: 128 },
+    isPlayerMove: false,
+    lastMoveTime: 0,
+  });
+
+  const onKeyPress = (e) => {
+    if (e.keyCode === 38) {
+      window.keys.up = true;
+    }
+    if (e.keyCode === 40) {
+      window.keys.down = true;
+    }
+    if (e.keyCode === 37) {
+      window.keys.left = true;
+    }
+    if (e.keyCode === 39) {
+      window.keys.right = true;
+    }
+  };
   const onKeyUp = (e) => {
-    // console.log("onKeyUp" + playerDir);
-    if (e.keyCode == 38) {
-      setUpPressed(false);
-      if (playerDir == DIRECTION.UP) {
-        setPlayerMove(false);
-      }
+    if (e.keyCode === 38) {
+      window.keys.up = false;
     }
-    if (e.keyCode == 40) {
-      setDownPressed(false);
-      if (playerDir == DIRECTION.DOWN) {
-        setPlayerMove(false);
-      }
+    if (e.keyCode === 40) {
+      window.keys.down = false;
     }
-    if (e.keyCode == 37) {
-      setLeftPressed(false);
-      if (playerDir == DIRECTION.LEFT) {
-        setPlayerMove(false);
-      }
+    if (e.keyCode === 37) {
+      window.keys.left = false;
     }
-    if (e.keyCode == 39) {
-      setRightPressed(false);
-      if (playerDir == DIRECTION.RIGHT) {
-        setPlayerMove(false);
-      }
+    if (e.keyCode === 39) {
+      window.keys.right = false;
     }
   };
 
   // Add event listener
-
   useEffect(() => {
-    window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('keydown', onKeyPress);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("keydown", onKeyPress);
     return () => {
-      window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('keydown', onKeyPress);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("keydown", onKeyPress);
     };
-  },[]);
+  }, []);
 
-  // Tic for animation...
+  useFrameLoop(() => {
+    const keysPressed = Object.keys(window.keys).filter(
+      (k) => window.keys[k] === true
+    );
+    if (window.lastMoveTime + MOVING_TIME < new Date().getTime()) {
+      if (keysPressed.length > 0) {
+        keysPressed.forEach((key) => {
+          dispatch({
+            type: "update",
+            newState: {
+              playerDir: key,
+              playerPos: { x: movementMap(key).x, y: movementMap(key).y },
+              isPlayerMove: true,
+            },
+          });
+        });
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      console.log("Tic " + playerDir, `[${playerPos.x};${playerPos.y}]`);
-      setLastMoveTime(new Date().getTime()); // Make it recall later
-
-    }, MOVING_TIME);
-
-    return () => {
-      clearTimeout(id);
+        window.lastMoveTime = new Date().getTime();
+      } else {
+        dispatch({
+          type: "update",
+          newState: {
+            playerPos: { x: 0, y: 0 },
+            isPlayerMove: false,
+          },
+        });
+      }
     }
-  }, [lastMoveTime]);
+  });
 
-  useEffect(() => {
+  return (
+    <>
+      <Viewport>
+        <Map>
+          <Character
+            pos={state.playerPos}
+            dir={state.playerDir}
+            isWalking={state.isPlayerMove}
+          />
+        </Map>
 
-    if (playerDir == DIRECTION.UP && isUpPressed) {
-      setPlayerPos({x:playerPos.x, y:playerPos.y - MOVING_DISTANCE});
-    }
-    else if (playerDir == DIRECTION.DOWN && isDownPressed) {
-      setPlayerPos({x:playerPos.x, y:playerPos.y + MOVING_DISTANCE});
-    }
-    else if (playerDir == DIRECTION.LEFT && isLeftPressed) {
-      setPlayerPos({x:playerPos.x - MOVING_DISTANCE, y:playerPos.y});
-    }
-    else if (playerDir == DIRECTION.RIGHT && isRightPressed) {
-      setPlayerPos({x:playerPos.x + MOVING_DISTANCE, y:playerPos.y});
-    }
-
-
-  }, [lastMoveTime, playerDir, isUpPressed, isDownPressed, isLeftPressed, isRightPressed]);
-
-
-  return <>
-    <Viewport >
-      <Map>
-        <Character pos={playerPos} dir={playerDir} isWalking={isPlayerMove} />
-      </Map>
-
-      <div> UP:{isUpPressed && "YES"} </div>
-      <div> DOWN:{isDownPressed && "YES"} </div>
-      <div> LEFT:{isLeftPressed && "YES"} </div>
-      <div> RIGHT:{isRightPressed && "YES"} </div>
-      <hr/>
-      <div> Dir:{playerDir} </div>
-      <hr/>
-      <div> isMoving:{isPlayerMove ? "Yes" : "No"} </div>
-
-    </Viewport>
-  </>;
+        <div> UP:{window.keys.up && "YES"} </div>
+        <div> DOWN:{window.keys.down && "YES"} </div>
+        <div> LEFT:{window.keys.left && "YES"} </div>
+        <div> RIGHT:{window.keys.right && "YES"} </div>
+        <hr />
+        <div> Dir:{state.playerDir} </div>
+        <hr />
+        <div> isMoving:{state.isPlayerMove ? "Yes" : "No"} </div>
+      </Viewport>
+    </>
+  );
 };
-
 
 export default Game;
